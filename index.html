@@ -66,15 +66,7 @@
     position: relative;
     z-index: 1;
   }
-  .logo-wrap {
-    width: 120px; height: 120px;
-    display: flex; align-items: center; justify-content: center;
-    margin-bottom: 6px;
-  }
-  .logo-wrap img {
-    width: 120px; height: 120px;
-    object-fit: contain;
-  }
+
   .brand {
     font-size: 24px;
     font-weight: 700;
@@ -107,49 +99,74 @@
     overflow: hidden;
   }
 
-  .upload-zone {
-    padding: 52px 24px;
+  /* ── Дві кнопки вибору ── */
+  .upload-buttons {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 14px;
-    cursor: pointer;
-    position: relative;
-    transition: background 0.2s;
-  }
-  .upload-zone:active { background: var(--accent-s); }
-  .upload-zone input[type=file] {
-    position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0;
-  }
-  .upload-icon-wrap {
-    width: 80px; height: 80px;
-    background: var(--accent-s);
-    border-radius: 24px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 38px;
-    transition: transform 0.2s;
-  }
-  .upload-zone:active .upload-icon-wrap { transform: scale(0.94); }
-  .upload-title {
-    font-size: 17px;
-    font-weight: 600;
-    color: var(--text);
-  }
-  .upload-hint {
-    font-size: 12px;
-    color: var(--muted);
-    font-weight: 400;
-  }
-  .upload-badge {
-    background: var(--accent-s);
-    color: var(--accent);
-    font-size: 11px;
-    font-weight: 600;
-    padding: 5px 14px;
-    border-radius: 20px;
-    letter-spacing: 0.06em;
+    gap: 10px;
+    padding: 20px;
   }
 
+  .upload-btn {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 18px;
+    border-radius: 14px;
+    border: none;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+    transition: transform 0.1s, opacity 0.15s;
+    position: relative;
+    text-align: left;
+    width: 100%;
+  }
+  .upload-btn:active { transform: scale(0.97); }
+  .upload-btn input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0; width: 100%; height: 100%;
+  }
+  .upload-btn-icon {
+    width: 48px; height: 48px;
+    border-radius: 13px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .upload-btn-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .upload-btn-title {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+  .upload-btn-hint {
+    font-size: 12px;
+    font-weight: 400;
+    opacity: 0.65;
+  }
+
+  .btn-camera {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 4px 16px rgba(119,64,243,0.32);
+  }
+  .btn-camera .upload-btn-icon {
+    background: rgba(255,255,255,0.20);
+  }
+
+  .btn-gallery {
+    background: var(--accent-s);
+    color: var(--accent);
+    border: 1.5px solid var(--border);
+  }
+  .btn-gallery .upload-btn-icon {
+    background: rgba(119,64,243,0.10);
+  }
+
+  /* ── Preview ── */
   .preview-card {
     display: none;
     position: relative;
@@ -179,6 +196,7 @@
   }
   .preview-clear:active { transform: scale(0.92); }
 
+  /* ── Scan button ── */
   .scan-btn {
     display: none;
     width: 100%;
@@ -198,6 +216,7 @@
   .scan-btn:active { transform: scale(0.98); }
   .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
 
+  /* ── Loading ── */
   .loading {
     display: none;
     flex-direction: column;
@@ -221,6 +240,7 @@
     line-height: 1.6;
   }
 
+  /* ── Result ── */
   .result-header {
     background: var(--accent);
     padding: 16px 20px;
@@ -242,7 +262,6 @@
     font-weight: 600;
     color: #fff;
   }
-
   .result-fields { padding: 4px 0; }
   .field-row {
     display: flex;
@@ -275,6 +294,7 @@
     color: var(--accent);
   }
 
+  /* ── Action row ── */
   .action-row {
     display: flex;
     gap: 10px;
@@ -308,6 +328,7 @@
   }
   .btn-secondary:hover { border-color: var(--accent); background: var(--accent-s); }
 
+  /* ── Error ── */
   .error-block {
     display: none;
     background: #FFF0F0;
@@ -331,22 +352,36 @@
 <body>
 
 <header>
-  <div class="logo-wrap"><img src="Mage_Delivery.png" alt="Mage Delivery"></div>
   <div class="brand">Mage <span>Delivery</span></div>
   <div class="tagline">AI розпізнавання чеків доставки</div>
 </header>
 
 <main>
 
-  <!-- Upload -->
+  <!-- Дві кнопки вибору -->
   <div class="card" id="uploadCard">
-    <div class="upload-zone">
-      <input type="file" accept="image/*"
-             id="fileInput" onchange="handleFile(this)">
-      <div class="upload-icon-wrap">📷</div>
-      <div class="upload-title">Сфотографуйте чек</div>
-      <div class="upload-hint">або оберіть фото з галереї</div>
-      <div class="upload-badge">ДОСТАВКА</div>
+    <div class="upload-buttons">
+
+      <button class="upload-btn btn-camera">
+        <input type="file" accept="image/*" capture="environment"
+               id="fileCamera" onchange="handleFile(this)">
+        <div class="upload-btn-icon">📷</div>
+        <div class="upload-btn-text">
+          <div class="upload-btn-title">Зробити фото чеку</div>
+          <div class="upload-btn-hint">Відкрити камеру телефону</div>
+        </div>
+      </button>
+
+      <button class="upload-btn btn-gallery">
+        <input type="file" accept="image/*"
+               id="fileGallery" onchange="handleFile(this)">
+        <div class="upload-btn-icon">🖼️</div>
+        <div class="upload-btn-text">
+          <div class="upload-btn-title">Завантажити фото</div>
+          <div class="upload-btn-hint">Обрати з галереї або файлів</div>
+        </div>
+      </button>
+
     </div>
   </div>
 
@@ -388,10 +423,8 @@
 </main>
 
 <script>
-// ── Адреса форми — вшита жорстко ──────────────────────
 const WIX_FORM_URL = 'https://www.rfood.store/qr-code-dilivery';
-
-const PROXY_URL = '/.netlify/functions/scan';
+const PROXY_URL    = '/.netlify/functions/scan';
 
 const FIELDS = [
   { key: 'establishment',    label: 'Заклад'    },
@@ -405,11 +438,10 @@ const FIELDS = [
   { key: 'city',             label: 'Місто'     },
 ];
 
-let imageBase64  = null;
-let imageMime    = null;
+let imageBase64   = null;
+let imageMime     = null;
 let extractedData = null;
 
-// ── File ────────────────────────────────────────────────
 function handleFile(input) {
   const file = input.files[0];
   if (!file) return;
@@ -429,7 +461,8 @@ function handleFile(input) {
 
 function clearImage() {
   imageBase64 = null; imageMime = null; extractedData = null;
-  document.getElementById('fileInput').value           = '';
+  document.getElementById('fileCamera').value          = '';
+  document.getElementById('fileGallery').value         = '';
   document.getElementById('previewCard').style.display = 'none';
   document.getElementById('uploadCard').style.display  = 'block';
   document.getElementById('scanBtn').style.display     = 'none';
@@ -438,7 +471,6 @@ function clearImage() {
 
 function resetAll() { clearImage(); }
 
-// ── Scan ────────────────────────────────────────────────
 async function scanReceipt() {
   if (!imageBase64) { showError('Спочатку оберіть фото чеку.'); return; }
 
@@ -465,7 +497,6 @@ async function scanReceipt() {
   }
 }
 
-// ── Render ──────────────────────────────────────────────
 function renderResult(data) {
   const c = document.getElementById('resultFields');
   c.innerHTML = '';
@@ -485,18 +516,13 @@ function renderResult(data) {
   show('resultCard', 'block');
 }
 
-// ── Open Wix ────────────────────────────────────────────
 function openWixForm() {
   if (!extractedData) return;
   const p = new URLSearchParams();
-  FIELDS.forEach(f => {
-    if (extractedData[f.key]) p.set(f.key, extractedData[f.key]);
-  });
-  const url = WIX_FORM_URL + '?' + p.toString();
-  window.open(url, '_blank');
+  FIELDS.forEach(f => { if (extractedData[f.key]) p.set(f.key, extractedData[f.key]); });
+  window.open(WIX_FORM_URL + '?' + p.toString(), '_blank');
 }
 
-// ── Helpers ─────────────────────────────────────────────
 function show(id, d = 'block') { document.getElementById(id).style.display = d; }
 function hide(id)               { document.getElementById(id).style.display = 'none'; }
 function showError(msg) {
