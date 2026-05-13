@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Mage Delivery · Сканер чеків</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:        #F6EFFF;
+    --bg2:       #EDE4FA;
+    --surface:   #FFFFFF;
+    --border:    #DDD3F5;
+    --accent:    #7740F3;
+    --accent-h:  #6530D9;
+    --accent-s:  #F0EAFF;
+    --text:      #1A1035;
+    --muted:     #8B7BAD;
+    --error:     #D94040;
+    --radius:    18px;
+    --shadow:    0 4px 24px rgba(119,64,243,0.10);
+    --shadow-sm: 0 2px 8px rgba(119,64,243,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rubik', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-bottom: 56px;
+    overflow-x: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    top: -120px; right: -80px;
+    width: 340px; height: 340px;
+    background: radial-gradient(circle, rgba(119,64,243,0.18) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+  body::after {
+    content: '';
+    position: fixed;
+    bottom: -80px; left: -60px;
+    width: 280px; height: 280px;
+    background: radial-gradient(circle, rgba(119,64,243,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  header {
+    width: 100%;
+    padding: 40px 24px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    position: relative;
+    z-index: 1;
+  }
+  .logo-wrap {
+    width: 120px; height: 120px;
+    display: flex; align-items: center; justify-content: center;
+    margin-bottom: 6px;
+  }
+  .logo-wrap img {
+    width: 120px; height: 120px;
+    object-fit: contain;
+  }
+  .brand {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .brand span { color: var(--accent); }
+  .tagline {
+    font-size: 13px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  main {
+    width: 100%;
+    max-width: 460px;
+    padding: 8px 16px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card {
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .upload-zone {
+    padding: 52px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.2s;
+  }
+  .upload-zone:active { background: var(--accent-s); }
+  .upload-zone input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 0;
+  }
+  .upload-icon-wrap {
+    width: 80px; height: 80px;
+    background: var(--accent-s);
+    border-radius: 24px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 38px;
+    transition: transform 0.2s;
+  }
+  .upload-zone:active .upload-icon-wrap { transform: scale(0.94); }
+  .upload-title {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .upload-hint {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+  .upload-badge {
+    background: var(--accent-s);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.06em;
+  }
+
+  .preview-card {
+    display: none;
+    position: relative;
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .preview-card img {
+    width: 100%;
+    display: block;
+    max-height: 380px;
+    object-fit: contain;
+    background: var(--bg2);
+  }
+  .preview-clear {
+    position: absolute;
+    top: 12px; right: 12px;
+    background: rgba(255,255,255,0.93);
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    width: 38px; height: 38px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    box-shadow: var(--shadow-sm);
+    transition: background 0.2s, transform 0.1s;
+  }
+  .preview-clear:active { transform: scale(0.92); }
+
+  .scan-btn {
+    display: none;
+    width: 100%;
+    background: var(--accent);
+    color: #ffffff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 19px;
+    font-family: 'Rubik', sans-serif;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 6px 22px rgba(119,64,243,0.34);
+  }
+  .scan-btn:hover { background: var(--accent-h); }
+  .scan-btn:active { transform: scale(0.98); }
+  .scan-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+  .loading {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 44px 24px;
+  }
+  .spinner {
+    width: 46px; height: 46px;
+    border: 3.5px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.75s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .result-header {
+    background: var(--accent);
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .result-check {
+    width: 30px; height: 30px;
+    background: rgba(255,255,255,0.22);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .result-header-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #fff;
+  }
+
+  .result-fields { padding: 4px 0; }
+  .field-row {
+    display: flex;
+    align-items: flex-start;
+    padding: 13px 20px;
+    border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+  .field-row:last-child { border-bottom: none; }
+  .field-key {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    min-width: 100px;
+    flex-shrink: 0;
+    padding-top: 2px;
+  }
+  .field-val {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .field-val.big {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .action-row {
+    display: flex;
+    gap: 10px;
+    padding: 14px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+  .btn {
+    flex: 1;
+    padding: 15px 10px;
+    border-radius: 13px;
+    border: none;
+    font-family: 'Rubik', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s, background 0.2s;
+    text-align: center;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--accent);
+    color: #ffffff;
+    box-shadow: 0 4px 14px rgba(119,64,243,0.28);
+  }
+  .btn-primary:hover { background: var(--accent-h); }
+  .btn-secondary {
+    background: var(--surface);
+    color: var(--accent);
+    border: 1.5px solid var(--border);
+  }
+  .btn-secondary:hover { border-color: var(--accent); background: var(--accent-s); }
+
+  .error-block {
+    display: none;
+    background: #FFF0F0;
+    border: 1.5px solid #F5C6C6;
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    font-size: 13px;
+    color: var(--error);
+    line-height: 1.6;
+  }
+
+  footer {
+    margin-top: 32px;
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.45;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap"><img src="Mage_Delivery.png" alt="Mage Delivery"></div>
+  <div class="brand">Mage <span>Delivery</span></div>
+  <div class="tagline">AI розпізнавання чеків доставки</div>
+</header>
+
+<main>
+
+  <!-- Upload -->
+  <div class="card" id="uploadCard">
+    <div class="upload-zone">
+      <input type="file" accept="image/*" capture="environment"
+             id="fileInput" onchange="handleFile(this)">
+      <div class="upload-icon-wrap">📷</div>
+      <div class="upload-title">Сфотографуйте чек</div>
+      <div class="upload-hint">або оберіть фото з галереї</div>
+      <div class="upload-badge">ДОСТАВКА</div>
+    </div>
+  </div>
+
+  <!-- Preview -->
+  <div class="preview-card" id="previewCard">
+    <img id="previewImg" src="" alt="Чек">
+    <div class="preview-clear" onclick="clearImage()">✕</div>
+  </div>
+
+  <!-- Scan button -->
+  <button class="scan-btn" id="scanBtn" onclick="scanReceipt()">
+    🔍 &nbsp; Розпізнати чек
+  </button>
+
+  <!-- Loading -->
+  <div class="card loading" id="loading">
+    <div class="spinner"></div>
+    <div class="loading-text">AI аналізує чек…<br>зазвичай 3–5 секунд</div>
+  </div>
+
+  <!-- Error -->
+  <div class="error-block" id="errorBlock"></div>
+
+  <!-- Result -->
+  <div class="card" id="resultCard" style="display:none">
+    <div class="result-header">
+      <div class="result-check">✓</div>
+      <div class="result-header-text">Дані розпізнано успішно</div>
+    </div>
+    <div class="result-fields" id="resultFields"></div>
+    <div class="action-row">
+      <button class="btn btn-primary" onclick="openWixForm()">→ Заповнити форму</button>
+      <button class="btn btn-secondary" onclick="resetAll()">Новий чек</button>
+    </div>
+  </div>
+
+  <footer>MAGE DELIVERY · AI SCANNER · GPT-4o</footer>
+
+</main>
+
+<script>
+// ── Адреса форми — вшита жорстко ──────────────────────
+const WIX_FORM_URL = 'https://www.rfood.store/qr-code-dilivery';
+
+const PROXY_URL = '/.netlify/functions/scan';
+
+const FIELDS = [
+  { key: 'establishment',    label: 'Заклад'    },
+  { key: 'receipt_number',   label: 'Чек №'     },
+  { key: 'cashier',          label: 'Касир'     },
+  { key: 'client_name',      label: 'Клієнт'    },
+  { key: 'client_phone',     label: 'Телефон'   },
+  { key: 'delivery_address', label: 'Адреса'    },
+  { key: 'total',            label: 'До оплати' },
+  { key: 'payment_method',   label: 'Оплата'    },
+  { key: 'city',             label: 'Місто'     },
+];
+
+let imageBase64  = null;
+let imageMime    = null;
+let extractedData = null;
+
+// ── File ────────────────────────────────────────────────
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  imageMime = file.type || 'image/jpeg';
+  const reader = new FileReader();
+  reader.onload = e => {
+    imageBase64 = e.target.result.split(',')[1];
+    document.getElementById('previewImg').src = e.target.result;
+    document.getElementById('previewCard').style.display = 'block';
+    document.getElementById('uploadCard').style.display  = 'none';
+    document.getElementById('scanBtn').style.display     = 'block';
+    hide('resultCard'); hide('errorBlock'); hide('loading');
+    extractedData = null;
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearImage() {
+  imageBase64 = null; imageMime = null; extractedData = null;
+  document.getElementById('fileInput').value           = '';
+  document.getElementById('previewCard').style.display = 'none';
+  document.getElementById('uploadCard').style.display  = 'block';
+  document.getElementById('scanBtn').style.display     = 'none';
+  hide('resultCard'); hide('errorBlock'); hide('loading');
+}
+
+function resetAll() { clearImage(); }
+
+// ── Scan ────────────────────────────────────────────────
+async function scanReceipt() {
+  if (!imageBase64) { showError('Спочатку оберіть фото чеку.'); return; }
+
+  show('loading', 'flex');
+  hide('resultCard'); hide('errorBlock');
+  document.getElementById('scanBtn').disabled = true;
+
+  try {
+    const res = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: imageBase64, mime: imageMime }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || `HTTP ${res.status}`);
+    extractedData = json;
+    hide('loading');
+    renderResult(extractedData);
+  } catch (e) {
+    hide('loading');
+    showError('Помилка: ' + e.message);
+  } finally {
+    document.getElementById('scanBtn').disabled = false;
+  }
+}
+
+// ── Render ──────────────────────────────────────────────
+function renderResult(data) {
+  const c = document.getElementById('resultFields');
+  c.innerHTML = '';
+  FIELDS.forEach(f => {
+    const val = data[f.key];
+    if (!val && val !== 0) return;
+    const row = document.createElement('div');
+    row.className = 'field-row';
+    const k = document.createElement('div');
+    k.className = 'field-key';
+    k.textContent = f.label;
+    const v = document.createElement('div');
+    v.className = 'field-val' + (f.key === 'total' ? ' big' : '');
+    v.textContent = f.key === 'total' ? val + ' грн' : val;
+    row.appendChild(k); row.appendChild(v); c.appendChild(row);
+  });
+  show('resultCard', 'block');
+}
+
+// ── Open Wix ────────────────────────────────────────────
+function openWixForm() {
+  if (!extractedData) return;
+  const p = new URLSearchParams();
+  FIELDS.forEach(f => {
+    if (extractedData[f.key]) p.set(f.key, extractedData[f.key]);
+  });
+  const url = WIX_FORM_URL + '?' + p.toString();
+  window.open(url, '_blank');
+}
+
+// ── Helpers ─────────────────────────────────────────────
+function show(id, d = 'block') { document.getElementById(id).style.display = d; }
+function hide(id)               { document.getElementById(id).style.display = 'none'; }
+function showError(msg) {
+  const el = document.getElementById('errorBlock');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+</script>
+</body>
+</html>
