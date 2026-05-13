@@ -1,18 +1,31 @@
 // netlify/functions/scan.js
-// Проксі між браузером і OpenAI GPT-4o Vision
-// Ключ API ніколи не потрапляє у браузер — зберігається в Netlify Environment Variables
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin':  '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type',
+};
 
 exports.handler = async (event) => {
-  // Дозволяємо тільки POST
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+
+  // Preflight OPTIONS запит від браузера
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers: CORS_HEADERS, body: '' };
   }
 
-  // Читаємо ключ із змінної середовища Netlify
+  if (event.httpMethod !== 'POST') {
+    return {
+      statusCode: 405,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Method not allowed' }),
+    };
+  }
+
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
     return {
       statusCode: 500,
+      headers: CORS_HEADERS,
       body: JSON.stringify({ error: 'OPENAI_API_KEY не налаштований у Netlify' }),
     };
   }
@@ -21,12 +34,20 @@ exports.handler = async (event) => {
   try {
     body = JSON.parse(event.body);
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Невалідний JSON' }) };
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Невалідний JSON' }),
+    };
   }
 
   const { image, mime = 'image/jpeg' } = body;
   if (!image) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Поле image відсутнє' }) };
+    return {
+      statusCode: 400,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ error: 'Поле image відсутнє' }),
+    };
   }
 
   const prompt = `Ти — система розпізнавання чеків ресторану.
@@ -59,24 +80,19 @@ exports.handler = async (event) => {
       body: JSON.stringify({
         model: 'gpt-4o',
         max_tokens: 800,
-        messages: [
-          {
-            role: 'user',
-            content: [
-              {
-                type: 'image_url',
-                image_url: {
-                  url: `data:${mime};base64,${image}`,
-                  detail: 'high',
-                },
+        messages: [{
+          role: 'user',
+          content: [
+            {
+              type: 'image_url',
+              image_url: {
+                url: `data:${mime};base64,${image}`,
+                detail: 'high',
               },
-              {
-                type: 'text',
-                text: prompt,
-              },
-            ],
-          },
-        ],
+            },
+            { type: 'text', text: prompt },
+          ],
+        }],
       }),
     });
 
@@ -84,14 +100,13 @@ exports.handler = async (event) => {
       const err = await response.json().catch(() => ({}));
       return {
         statusCode: response.status,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ error: err?.error?.message || `OpenAI HTTP ${response.status}` }),
       };
     }
 
     const data = await response.json();
     const raw = data.choices?.[0]?.message?.content?.trim() || '';
-
-    // Прибираємо можливі markdown-огорожі
     const clean = raw.replace(/```json|```/g, '').trim();
 
     let parsed;
@@ -100,19 +115,21 @@ exports.handler = async (event) => {
     } catch {
       return {
         statusCode: 500,
+        headers: CORS_HEADERS,
         body: JSON.stringify({ error: 'GPT повернув невалідний JSON: ' + clean.slice(0, 200) }),
       };
     }
 
     return {
       statusCode: 200,
-      headers: { 'Content-Type': 'application/json' },
+      headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
       body: JSON.stringify(parsed),
     };
 
   } catch (e) {
     return {
       statusCode: 500,
+      headers: CORS_HEADERS,
       body: JSON.stringify({ error: e.message }),
     };
   }
