@@ -1,6 +1,6 @@
 // netlify/functions/auth.js
-// Логін і пароль зберігаються в Netlify Environment Variables:
-// APP_LOGIN і APP_PASSWORD
+// Користувачі зберігаються в Netlify Environment Variables як JSON:
+// APP_USERS = [{"login":"courier1","password":"pass1"},{"login":"courier2","password":"pass2"}]
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin':  '*',
@@ -21,10 +21,22 @@ exports.handler = async (event) => {
   }
 
   const { login, password } = body;
-  const correctLogin    = process.env.APP_LOGIN;
-  const correctPassword = process.env.APP_PASSWORD;
 
-  if (login === correctLogin && password === correctPassword) {
+  // Читаємо список користувачів з ENV
+  let users = [];
+  try {
+    users = JSON.parse(process.env.APP_USERS || '[]');
+  } catch {
+    return {
+      statusCode: 500,
+      headers: CORS_HEADERS,
+      body: JSON.stringify({ ok: false, error: 'APP_USERS має невалідний формат JSON' }),
+    };
+  }
+
+  const found = users.find(u => u.login === login && u.password === password);
+
+  if (found) {
     return {
       statusCode: 200,
       headers: CORS_HEADERS,
