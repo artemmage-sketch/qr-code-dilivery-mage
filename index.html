@@ -673,6 +673,12 @@ function renderResult(data) {
     v.textContent = f.key === 'total' ? val + ' грн' : val;
     row.appendChild(k); row.appendChild(v); c.appendChild(row);
   });
+
+  // Автозаповнення під'їзд / поверх / квартира якщо GPT їх розпізнав
+  if (data.entrance)  document.getElementById('fieldPidyizd').value = data.entrance;
+  if (data.floor)     document.getElementById('fieldPoverh').value  = data.floor;
+  if (data.apartment) document.getElementById('fieldKvart').value   = data.apartment;
+
   show('resultCard', 'block');
 }
 
