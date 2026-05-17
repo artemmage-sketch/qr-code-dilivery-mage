@@ -616,6 +616,9 @@ function handleFile(input) {
 
 function clearImage() {
   imageBase64 = null; imageMime = null; extractedData = null;
+  courierCalled = false;
+  const btn = document.getElementById('callCourierBtn');
+  if (btn) { btn.disabled = false; btn.textContent = '🚴 Викликати кур\'єра'; btn.style.background = ''; btn.style.boxShadow = ''; }
   document.getElementById('fileCamera').value          = '';
   document.getElementById('fileGallery').value         = '';
   document.getElementById('previewCard').style.display = 'none';
@@ -683,8 +686,16 @@ function renderResult(data) {
 }
 
 // ── Call courier ─────────────────────────────────────────
+let courierCalled = false;
+
 async function callCourier() {
   if (!extractedData) return;
+
+  // Захист від повторного натискання
+  if (courierCalled) {
+    alert('Кур\'єра вже викликано для цього замовлення!');
+    return;
+  }
 
   const btn = document.getElementById('callCourierBtn');
   btn.disabled = true;
@@ -703,9 +714,14 @@ async function callCourier() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
+
+    // Блокуємо назавжди до нового чеку
+    courierCalled = true;
+    btn.disabled = true;
     btn.textContent = '✓ Кур\'єра викликано!';
     btn.style.background = '#22A06B';
-    setTimeout(() => { resetAll(); }, 2000);
+    btn.style.boxShadow  = 'none';
+
   } catch {
     btn.disabled = false;
     btn.textContent = '🚴 Викликати кур\'єра';
